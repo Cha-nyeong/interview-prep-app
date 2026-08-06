@@ -15,6 +15,27 @@ except Exception:
     st.error("API 키 설정이 필요합니다. Streamlit Secrets 설정을 확인해주세요.")
     st.stop()
 
+# 사용 가능한 최신 모델 자동 탐색 함수
+@st.cache_resource
+def get_working_model():
+    try:
+        available_models = []
+        for m in genai.list_models():
+            if 'generateContent' in m.supported_generation_methods:
+                available_models.append(m.name)
+        
+        # 최신 모델 순서대로 우선순위 배정 (3.5 -> 2.5 -> 1.5)
+        for preferred in ['gemini-3.5-flash', 'gemini-2.5-flash', 'gemini-1.5-flash']:
+            for m in available_models:
+                if preferred in m:
+                    return m
+        
+        if available_models:
+            return available_models[0]
+    except Exception:
+        pass
+    return "gemini-2.5-flash"
+
 # 입력 폼
 with st.form("interview_form"):
     student_id = st.text_input("학번 및 이름", placeholder="예: 30101 홍길동")
@@ -52,8 +73,9 @@ if submitted:
                 - 친절하면서도 예리한 입학사정관의 어조를 유지할 것.
                 """
 
-                # 검증된 레거시 방식을 통한 1.5-flash 모델 호출
-                model = genai.GenerativeModel("gemini-1.5-flash")
+                # 자동 탐색된 모델로 생성
+                target_model_name = get_working_model()
+                model = genai.GenerativeModel(target_model_name)
                 response = model.generate_content(prompt)
 
                 st.success("면접 질문 생성이 완료되었습니다!")
