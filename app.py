@@ -1,5 +1,5 @@
 import streamlit as st
-import google.generativeai as genai
+from google import genai
 
 # 웹 페이지 기본 설정
 st.set_page_config(page_title="고교 3학년 맞춤형 면접질문 생성기", layout="centered")
@@ -10,7 +10,7 @@ st.caption("자신의 희망 전공과 핵심 생기부 활동을 입력하면 �
 # Streamlit Secrets에서 API 키 로드
 try:
     api_key = st.secrets["GEMINI_API_KEY"]
-    genai.configure(api_key=api_key)
+    client = genai.Client(api_key=api_key)
 except Exception:
     st.error("API 키 설정이 필요합니다. Streamlit Secrets 설정을 확인해주세요.")
     st.stop()
@@ -53,9 +53,11 @@ if submitted:
                 - 친절하면서도 예리한 입학사정관의 어조를 유지할 것.
                 """
 
-                # 기본 1.5 flash 모델 직접 지정
-                model = genai.GenerativeModel("gemini-1.5-flash")
-                response = model.generate_content(prompt)
+                # 최신 SDK 규격 적용
+                response = client.models.generate_content(
+                    model="gemini-1.5-flash",
+                    contents=prompt
+                )
 
                 st.success("면접 질문 생성이 완료되었습니다!")
                 st.markdown("---")
