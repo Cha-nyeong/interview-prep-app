@@ -52,9 +52,9 @@ if submitted:
                 - 친절하면서도 예리한 입학사정관의 어조를 유지할 것.
                 """
 
-                # 무료 티어 할당량이 풍부한 gemini-1.5-flash 모델 사용
+                # models/ 접두사를 명시하여 호출
                 response = client.models.generate_content(
-                    model="gemini-1.5-flash",
+                    model="models/gemini-1.5-flash",
                     contents=prompt
                 )
 
