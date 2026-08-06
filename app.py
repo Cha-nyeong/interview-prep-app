@@ -24,7 +24,6 @@ def get_working_model():
             if 'generateContent' in m.supported_generation_methods:
                 available_models.append(m.name)
         
-        # 최신 모델 순서대로 우선순위 배정 (3.5 -> 2.5 -> 1.5)
         for preferred in ['gemini-3.5-flash', 'gemini-2.5-flash', 'gemini-1.5-flash']:
             for m in available_models:
                 if preferred in m:
@@ -73,15 +72,24 @@ if submitted:
                 - 친절하면서도 예리한 입학사정관의 어조를 유지할 것.
                 """
 
-                # 자동 탐색된 모델로 생성
                 target_model_name = get_working_model()
                 model = genai.GenerativeModel(target_model_name)
                 response = model.generate_content(prompt)
+                generated_text = response.text
 
                 st.success("면접 질문 생성이 완료되었습니다!")
                 st.markdown("---")
                 st.subheader(f"📌 {student_id} 학생을 위한 맞춤형 면접 질문")
-                st.markdown(response.text)
+                
+                # 1. 화면 출력용 마크다운
+                st.markdown(generated_text)
+                
+                st.markdown("---")
+                st.info("💡 **활동지 작성 안내**: 아래 박스 우측 상단의 **복사 버튼(아이콘)**을 눌러 생성된 질문을 통째로 복사한 뒤 활동지에 붙여넣으세요!")
+
+                # 2. 복사 전용 텍스트 영역 (우측 상단 복사 아이콘 자동 생성)
+                copy_content = f"[학생 정보]\n학번/이름: {student_id}\n지원전공: {major}\n탐구활동: {activity}\n\n[생성된 면접 질문]\n{generated_text}"
+                st.code(copy_content, language="text")
 
             except Exception as e:
                 st.error(f"질문 생성 중 오류가 발생했습니다: {e}")
