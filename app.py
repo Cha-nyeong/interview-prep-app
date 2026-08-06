@@ -53,11 +53,20 @@ if submitted:
                 - 친절하면서도 예리한 입학사정관의 어조를 유지할 것.
                 """
 
-                # 최신 SDK 규격 적용
-                response = client.models.generate_content(
-                    model="gemini-1.5-flash",
-                    contents=prompt
-                )
+                # 모델 자동 선택 및 호출 (gemini-2.0-flash 우선 시도)
+                try:
+                    response = client.models.generate_content(
+                        model="gemini-2.0-flash",
+                        contents=prompt
+                    )
+                except Exception:
+                    # gemini-2.0-flash 실패 시 계정 내 사용 가능한 첫 번째 모델로 유연하게 전환
+                    model_list = [m.name for m in client.models.list()]
+                    valid_model = model_list[0] if model_list else "gemini-2.5-flash"
+                    response = client.models.generate_content(
+                        model=valid_model,
+                        contents=prompt
+                    )
 
                 st.success("면접 질문 생성이 완료되었습니다!")
                 st.markdown("---")
