@@ -1,13 +1,98 @@
 import streamlit as st
 import google.generativeai as genai
 
-# 웹 페이지 기본 설정
-st.set_page_config(page_title="맞춤형 모의면접 질문 생성기", layout="centered")
+# 1. 웹 페이지 기본 설정
+st.set_page_config(
+    page_title="맞춤형 모의면접 질문 생성기",
+    page_icon="🎓",
+    layout="centered",
+    initial_sidebar_state="collapsed"
+)
 
-st.title("🎓💼 맞춤형 모의면접 질문 생성 시스템")
-st.caption("진로 희망(대입/취업·알바)에 맞춰 나만의 면접 질문을 생성하고 수행평가 활동지에 활용하세요.")
+# 2. 커스텀 CSS (모바일 반응형 및 깔끔한 디자인 적용)
+st.markdown("""
+    <style>
+    /* 전체 배경 및 폰트 레이아웃 정돈 */
+    .main .block-container {
+        padding-top: 2rem;
+        padding-bottom: 3rem;
+        max-width: 680px;
+    }
+    
+    /* 메인 타이틀 반응형 스타일링 */
+    .main-title {
+        font-size: 1.6rem;
+        font-weight: 800;
+        color: #1E293B;
+        text-align: center;
+        margin-bottom: 0.3rem;
+        word-break: keep-all;
+        line-height: 1.3;
+    }
+    
+    .main-caption {
+        font-size: 0.9rem;
+        color: #64748B;
+        text-align: center;
+        margin-bottom: 1.8rem;
+        word-break: keep-all;
+    }
 
-# Streamlit Secrets에서 API 키 로드 및 설정
+    /* 라디오 버튼(타입 선택) 커스텀 강화 */
+    div[data-testid="stRadio"] > label {
+        font-weight: 700 !important;
+        font-size: 1.05rem !important;
+        color: #0F172A !important;
+        margin-bottom: 0.5rem;
+    }
+
+    div[data-testid="stRadio"] div[role="radiogroup"] {
+        gap: 12px;
+    }
+
+    div[data-testid="stRadio"] div[role="radiogroup"] > label {
+        background-color: #F8FAFC;
+        border: 2px solid #E2E8F0;
+        border-radius: 12px;
+        padding: 14px 16px;
+        width: 100%;
+        transition: all 0.2s ease-in-out;
+        cursor: pointer;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    }
+
+    div[data-testid="stRadio"] div[role="radiogroup"] > label:hover {
+        border-color: #94A3B8;
+        background-color: #F1F5F9;
+    }
+
+    div[data-testid="stRadio"] div[role="radiogroup"] > label[data-checked="true"] {
+        border-color: #2563EB !important;
+        background-color: #EFF6FF !important;
+    }
+
+    /* 버튼 스타일링 */
+    .stButton > button {
+        width: 100%;
+        background-color: #2563EB;
+        color: white;
+        font-weight: 700;
+        font-size: 1.05rem;
+        padding: 0.75rem 1rem;
+        border-radius: 10px;
+        border: none;
+        box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.2);
+        transition: all 0.2s;
+    }
+
+    .stButton > button:hover {
+        background-color: #1D4ED8;
+        box-shadow: 0 6px 8px -1px rgba(37, 99, 235, 0.3);
+    }
+    </style>
+""", unsafe_allow_html=True)
+
+# 3. Streamlit Secrets에서 API 키 로드
 try:
     api_key = st.secrets["GEMINI_API_KEY"]
     genai.configure(api_key=api_key)
@@ -35,44 +120,47 @@ def get_working_model():
         pass
     return "gemini-2.5-flash"
 
-# 1. 면접 유형 선택 (Radio Button)
+# --- 헤더 영역 ---
+st.markdown('<div class="main-title">🎯 맞춤형 모의면접 질문 생성기</div>', unsafe_allow_html=True)
+st.markdown('<div class="main-caption">진로 희망에 따라 유형을 선택하고 생기부 및 경험을 입력해보세요.</div>', unsafe_allow_html=True)
+
+# --- 1. 면접 유형 선택 (카드 형태 라디오 버튼) ---
 interview_type = st.radio(
-    "📌 면접 유형을 선택하세요:",
-    ("Type A: 대입 진학용 면접", "Type B: 취업/알바 구인용 면접"),
-    horizontal=True
+    "📌 면접 목적을 선택하세요",
+    ("🎓 Type A : 대입 진학용 면접", "💼 Type B : 취업 및 알바용 면접"),
+    index=0
 )
 
-st.markdown("---")
+st.write("") # 여백 조정
 
-# 2. 입력 폼 구성 (유형에 따라 동적 변경)
+# --- 2. 입력 폼 ---
 with st.form("interview_form"):
     student_id = st.text_input("학번 및 이름", placeholder="예: 30101 홍길동")
     
     if "Type A" in interview_type:
-        major_or_job = st.text_input("지원 희망 전공/학과", placeholder="예: 컴퓨터공학과, 국어교육과 등")
+        major_or_job = st.text_input("지원 희망 전공 / 학과", placeholder="예: 컴퓨터공학과, 국어교육과 등")
         activity_or_exp = st.text_area(
-            "생기부 핵심 탐구/활동 내용 (300자 이상 권장)",
-            placeholder="예: 2학년 진로활동 시간에 AI 윤리와 가치관에 대한 보고서를 작성함...",
-            height=180
+            "생기부 핵심 탐구 / 활동 내용",
+            placeholder="예: 2학년 진로활동 시간에 AI 윤리와 가치관에 대한 보고서를 작성하고 학급에서 발표함...",
+            height=160
         )
     else:
-        major_or_job = st.text_input("지원 희망 직무 및 업종", placeholder="예: 카페 바리스타, 편의점 알바, 웹디자이너, 사무보조 등")
+        major_or_job = st.text_input("지원 희망 직무 / 업종", placeholder="예: 카페 바리스타, 편의점 알바, 사무보조 등")
         activity_or_exp = st.text_area(
-            "관련 경험, 강점 및 주요 역량 (300자 이상 권장)",
-            placeholder="예: 성실함과 인내심이 강점임. 동아리 활동에서 부기장을 맡아 팀원 간의 의견 대립을 중재한 경험이 있으며, 서비스직 관련 기초 예절을 숙지함...",
-            height=180
+            "관련 경험 및 주요 강점",
+            placeholder="예: 동아리 부기장으로서 갈등을 중재한 경험이 있으며, 성실함과 약속 시간을 엄수하는 책임감이 강점임...",
+            height=160
         )
         
-    submitted = st.form_submit_button("면접 질문 생성하기")
+    submitted = st.form_submit_button("✨ 맞춤형 면접 질문 생성하기")
 
-# 3. 제출 클릭 시 AI 질문 생성
+# --- 3. 제출 및 결과 출력 ---
 if submitted:
     if not student_id or not major_or_job or not activity_or_exp:
-        st.warning("모든 항목을 입력해주세요.")
+        st.warning("⚠️ 모든 항목을 입력해야 질문 생성이 가능합니다.")
     else:
-        with st.spinner("선택한 면접 유형에 맞춘 심화 질문을 추출하고 있습니다..."):
+        with st.spinner("🔍 입학사정관 및 면접관 관점에서 질문을 다듬고 있습니다..."):
             try:
-                # Type A (대입) 프롬프트
                 if "Type A" in interview_type:
                     prompt = f"""
                     당신은 대한민국 주요 대학의 정시/수시 학종 전문 입학사정관이자 해당 전공 분야의 교수입니다.
@@ -92,7 +180,6 @@ if submitted:
                     - 각 질문마다 '질문 의도(평가 요소)'를 괄호로 명시할 것.
                     - 친절하면서도 예리한 입학사정관의 어조를 유지할 것.
                     """
-                # Type B (취업/알바) 프롬프트
                 else:
                     prompt = f"""
                     당신은 해당 채용 분야의 면접관이자 인사담당자(또는 매장 채용 매니저)입니다.
@@ -105,7 +192,7 @@ if submitted:
 
                     [질문 생성 원칙 - 총 3문항]
                     1. [지원 동기 및 직무 이해도]: 해당 직무에 지원한 이유와 본인이 이해하고 있는 주요 업무 수행 방식에 대해 묻는 질문.
-                    2. [상황 대처 및 문제 해결 능력]: 해당 업무 현장에서 발생할 수 있는 실제 돌발 상황(예: 난처한 고객 응대, 업무 미숙, 동료와의 갈등 등)을 제시하고 어떻게 대처할 것인지 묻는 질문.
+                    2. [상황 대처 및 문제 해결 능력]: 해당 업무 현장에서 발생할 수 있는 실제 돌발 상황을 제시하고 어떻게 대처할 것인지 묻는 질문.
                     3. [책임감 및 조직 적응력]: 약속 준수, 근태관리, 조직 규율 준수 및 본인의 강점을 현장에 어떻게 적용할지 묻는 질문.
 
                     [출력 형식]
@@ -118,15 +205,17 @@ if submitted:
                 response = model.generate_content(prompt)
                 generated_text = response.text
 
-                st.success("면접 질문 생성이 완료되었습니다!")
+                st.success("✅ 질문 생성이 완료되었습니다!")
                 st.markdown("---")
-                st.subheader(f"📌 {student_id} 학생({interview_type.split(':')[1].strip()})을 위한 맞춤형 면접 질문")
                 
-                # 화면 출력
+                type_name = "대입" if "Type A" in interview_type else "취업·알바"
+                st.subheader(f"📌 {student_id} 학생을 위한 {type_name} 질문")
+                
+                # 생성된 질문 Markdown 출력
                 st.markdown(generated_text)
                 
-                st.markdown("---")
-                st.info("💡 **활동지 작성 안내**: 아래 박스 우측 상단의 **복사 버튼(아이콘)**을 눌러 생성된 질문을 통째로 복사한 뒤 활동지에 붙여넣으세요!")
+                st.write("")
+                st.info("💡 **활동지 작성 방법**: 아래 상자 우측 상단의 **[복사 아이콘]**을 터치하면 전체 내용이 복사됩니다. 활동지에 붙여넣으세요.")
 
                 # 복사 전용 텍스트 영역
                 type_label = "지원전공" if "Type A" in interview_type else "지원직무"
