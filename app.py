@@ -21,7 +21,7 @@ with st.form("interview_form"):
     major = st.text_input("지원 희망 전공/학과", placeholder="예: 컴퓨터공학과, 국어교육과 등")
     activity = st.text_area(
         "생기부 핵심 탐구/활동 내용 (300자 이상 권장)",
-        placeholder="예: 2학년 진로활동 시간에 AI 윤리와 가치관에 대한 보고서를 작성함. 인공지능의 편향성 문제를 주제로 법적 규제의 필요성을 탐구함...",
+        placeholder="예: 2학년 진로활동 시간에 AI 윤리와 가치관에 대한 보고서를 작성함...",
         height=180
     )
     submitted = st.form_submit_button("면접 질문 생성하기")
@@ -53,9 +53,16 @@ if submitted:
                 - 친절하면서도 예리한 입학사정관의 어조를 유지할 것.
                 """
 
-                # Gemini 모델 호출
-                model = genai.GenerativeModel("models/gemini-2.5-flash")
-                response = model.generate_content(prompt)
+                # 가용한 플래시 모델 자동 탐색 및 호출 (오류 방지)
+                try:
+                    model = genai.GenerativeModel("gemini-1.5-flash")
+                    response = model.generate_content(prompt)
+                except Exception:
+                    # 예외 발생 시 지원 모델 자동 조회 후 생성
+                    available_models = [m.name for m in genai.list_models() if 'generateContent' in m.supported_generation_methods]
+                    flash_model = next((m for m in available_models if 'flash' in m), available_models[0])
+                    model = genai.GenerativeModel(flash_model)
+                    response = model.generate_content(prompt)
 
                 st.success("면접 질문 생성이 완료되었습니다!")
                 st.markdown("---")
