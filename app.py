@@ -33,7 +33,6 @@ if submitted:
     else:
         with st.spinner("입학사정관 관점에서 심화 질문을 추출하고 있습니다..."):
             try:
-                # 프롬프트 설계
                 prompt = f"""
                 당신은 대한민국 주요 대학의 정시/수시 학종 전문 입학사정관이자 해당 전공 분야의 교수입니다.
                 학생이 제출한 정보와 활동 내용을 바탕으로, 실제 대입 면접에서 활용 가능한 고난도 면접 질문 3개를 생성하세요.
@@ -53,9 +52,9 @@ if submitted:
                 - 친절하면서도 예리한 입학사정관의 어조를 유지할 것.
                 """
 
-                # 최신 공식 무료 모델로 호출 (복잡한 try-except 제거)
+                # 무료 티어 할당량이 풍부한 gemini-1.5-flash 모델 사용
                 response = client.models.generate_content(
-                    model="gemini-2.0-flash",
+                    model="gemini-1.5-flash",
                     contents=prompt
                 )
 
