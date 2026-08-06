@@ -53,16 +53,9 @@ if submitted:
                 - 친절하면서도 예리한 입학사정관의 어조를 유지할 것.
                 """
 
-                # 가용한 플래시 모델 자동 탐색 및 호출 (오류 방지)
-                try:
-                    model = genai.GenerativeModel("gemini-1.5-flash")
-                    response = model.generate_content(prompt)
-                except Exception:
-                    # 예외 발생 시 지원 모델 자동 조회 후 생성
-                    available_models = [m.name for m in genai.list_models() if 'generateContent' in m.supported_generation_methods]
-                    flash_model = next((m for m in available_models if 'flash' in m), available_models[0])
-                    model = genai.GenerativeModel(flash_model)
-                    response = model.generate_content(prompt)
+                # 기본 1.5 flash 모델 직접 지정
+                model = genai.GenerativeModel("gemini-1.5-flash")
+                response = model.generate_content(prompt)
 
                 st.success("면접 질문 생성이 완료되었습니다!")
                 st.markdown("---")
