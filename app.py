@@ -54,7 +54,7 @@ if submitted:
                 """
 
                 # Gemini 모델 호출
-                model = genai.GenerativeModel("gemini-1.5-flash")
+                model = genai.GenerativeModel("models/gemini-2.5-flash")
                 response = model.generate_content(prompt)
 
                 st.success("면접 질문 생성이 완료되었습니다!")
